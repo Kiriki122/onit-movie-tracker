@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+      container_name: movie_app
+      build:
+        context: .
+        dockerfile: Dockerfile
+      restart: always
+      ports:
+        - "3000:3000"
+      environment:
+        - DATABASE_URL=postgresql://user:password@db:5432/movies_db?schema=public
+      depends_on:
+        db:
+          condition: service_started
+      healthcheck:
+        test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+  db:
+    image: postgres:15-alpine
+    container_name: movie_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: movies_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
